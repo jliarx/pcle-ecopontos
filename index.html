@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PCLE — encontre pontos de coleta de lixo eletrônico e descarte seus equipamentos com consciência." />
+  <title>PCLE | Mapa de Ecopontos</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://tile.openstreetmap.org">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root{--green:#145b49;--green-dark:#0b332f;--mint:#eaf3ed;--cream:#f8faf7;--ink:#16312f;--muted:#657570;--line:#dfe8e2;--white:#fff;--gold:#d99a2b}
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink);background:var(--cream);line-height:1.55}
+    a{color:inherit} .container{width:min(1220px,92%);margin:auto}
+    header{background:rgba(255,255,255,.96);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1000}
+    .nav{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-weight:800;letter-spacing:.03em;font-size:1.5rem;color:var(--green-dark)}
+    .brand-mark{width:42px;height:42px;border-radius:50% 50% 50% 8px;background:var(--green);color:white;display:grid;place-items:center;font-size:1.25rem;transform:rotate(-10deg)}
+    .brand small{display:block;font-size:.7rem;font-weight:500;letter-spacing:0;color:var(--muted)}
+    nav{display:flex;align-items:center;gap:25px} nav a{text-decoration:none;font-size:.92rem;color:#314944} nav a:hover{color:var(--green)}
+    .hero{background:linear-gradient(110deg,#eaf3ed 0%,#f5f8f3 62%,#dbe9dd 100%);overflow:hidden}
+    .hero-inner{min-height:300px;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:35px;padding:36px 0}
+    .eyebrow{color:var(--green);font-size:.76rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase}
+    h1{font-size:clamp(2rem,4vw,3.15rem);line-height:1.08;letter-spacing:-.04em;margin:12px 0 16px;max-width:650px}
+    .hero p{max-width:620px;color:#49605a;margin:0 0 22px}
+    .hero-image{height:245px;border-radius:24px;background:linear-gradient(0deg,rgba(11,51,47,.18),rgba(11,51,47,.02)),url('https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=1200&q=85') center/cover;box-shadow:0 18px 40px #123b2d20}
+    .pills{display:flex;flex-wrap:wrap;gap:12px}.pill{font-size:.84rem;background:#fff;border:1px solid #d8e5dc;padding:8px 12px;border-radius:999px;color:#31564b}
+    .section{padding:34px 0}.section-head{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:18px}
+    h2{font-size:1.55rem;letter-spacing:-.025em;margin:0 0 5px}.section-head p{margin:0;color:var(--muted);font-size:.94rem}
+    .map-layout{display:grid;grid-template-columns:290px minmax(0,1fr) 300px;gap:16px;align-items:stretch}
+    .panel{background:var(--white);border:1px solid var(--line);border-radius:18px;overflow:hidden;min-width:0}
+    .panel-pad{padding:16px}.search{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:10px;font:inherit;outline-color:var(--green);margin-bottom:12px}
+    .filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}.filter{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:.78rem;cursor:pointer;color:#4b615a}.filter.active{background:var(--green);color:white;border-color:var(--green)}
+    #point-list{max-height:475px;overflow:auto}.point-item{display:block;width:100%;text-align:left;padding:13px 15px;border:0;border-top:1px solid #edf1ee;background:white;cursor:pointer;color:var(--ink)}.point-item:hover,.point-item.selected{background:#edf5ef}.point-item strong{display:block;font-size:.9rem}.point-item span{display:block;color:var(--muted);font-size:.78rem;margin-top:3px}.tag{display:inline-block!important;width:max-content;background:#edf6ef;color:var(--green)!important;border:1px solid #d3e7d7;border-radius:999px;padding:2px 7px;font-size:.68rem!important;margin-top:7px!important}
+    #map{height:560px;width:100%;z-index:1}.map-note{padding:9px 13px;font-size:.73rem;color:var(--muted);border-top:1px solid var(--line)}
+    .detail-image{height:170px;background:#eaf3ed center/cover;display:block;width:100%;object-fit:cover}.detail-body{padding:17px}.detail-title{font-size:1.15rem;margin:0 0 5px}.detail-address{font-size:.86rem;color:var(--muted);margin:0 0 15px}.detail-row{display:flex;gap:10px;padding:10px 0;border-top:1px solid #edf1ee;font-size:.83rem}.detail-row b{display:block;font-size:.8rem}.detail-row span{color:var(--muted)}.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:0;border-radius:10px;background:var(--green);color:#fff;text-decoration:none;padding:12px 16px;font-weight:700;font-size:.88rem;cursor:pointer}.btn:hover{background:#0e483a}.btn-outline{background:white;color:var(--green);border:1px solid var(--line)}.detail-body .btn{width:100%;margin-top:13px}
+    .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.gallery-card{background:white;border:1px solid var(--line);border-radius:16px;overflow:hidden}.gallery-card img{width:100%;height:185px;object-fit:cover;display:block}.gallery-card div{padding:15px}.gallery-card h3{margin:0 0 5px;font-size:1rem}.gallery-card p{margin:0;color:var(--muted);font-size:.86rem}
+    .about{display:grid;grid-template-columns:1fr 1fr;gap:25px;align-items:center;background:#edf4ee;border-radius:20px;padding:26px}.about p{color:#4d625b}.about ul{padding-left:20px;color:#4d625b}
+    footer{background:var(--green-dark);color:white;padding:28px 0;margin-top:20px}.footer-inner{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}.footer-inner p{margin:0;color:#d5e5dd;font-size:.83rem}.socials{display:flex;gap:12px}.socials a{border:1px solid #54746a;border-radius:50%;width:38px;height:38px;display:grid;place-items:center;text-decoration:none;font-size:.82rem}
+    .small-note{font-size:.78rem;color:var(--muted)}.empty{padding:20px;color:var(--muted);font-size:.86rem}
+    @media(max-width:1050px){.map-layout{grid-template-columns:250px minmax(0,1fr)}.detail-panel{grid-column:1/-1;display:grid;grid-template-columns:240px 1fr}.detail-image{height:100%;min-height:250px}.detail-body .btn{width:auto}.hero-inner{grid-template-columns:1fr .75fr}}
+    @media(max-width:720px){.nav{padding:12px 0;align-items:flex-start}.brand{font-size:1.25rem}nav{gap:10px;flex-wrap:wrap;justify-content:flex-end}nav a{font-size:.78rem}.hero-inner{grid-template-columns:1fr;padding:30px 0}.hero-image{height:190px}.map-layout{grid-template-columns:1fr}.point-list-panel{order:2}.map-panel{order:1}#map{height:390px}.detail-panel{order:3;display:block}.detail-image{height:190px;min-height:0}.gallery{grid-template-columns:1fr}.gallery-card img{height:200px}.about{grid-template-columns:1fr;padding:20px}.section-head{align-items:start;flex-direction:column}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="container nav">
+    <a class="brand" href="#inicio"><span class="brand-mark">♻</span><span>PCLE<small>Atividade de extensão integrada</small></span></a>
+    <nav aria-label="Navegação principal">
+      <a href="#inicio">Início</a><a href="#ecopontos">Ecopontos</a><a href="#sobre">Sobre</a><a href="#galeria">Galeria</a>
+    </nav>
+  </div>
+</header>
+<main>
+  <section class="hero" id="inicio">
+    <div class="container hero-inner">
+      <div>
+        <div class="eyebrow">Descarte consciente</div>
+        <h1>Seu eletrônico antigo pode ter um destino melhor.</h1>
+        <p>Encontre pontos de coleta de resíduos eletrônicos, consulte as informações disponíveis e contribua para um futuro mais sustentável.</p>
+        <div class="pills"><span class="pill">♧ Preservação ambiental</span><span class="pill">♻ Economia circular</span><span class="pill">⌖ Informação acessível</span></div>
+      </div>
+      <div class="hero-image" role="img" aria-label="Resíduos eletrônicos para descarte consciente"></div>
+    </div>
+  </section>
+
+  <section class="section container" id="ecopontos">
+    <div class="section-head">
+      <div><div class="eyebrow">Mapa interativo</div><h2>Encontre um ponto de coleta</h2><p>Pesquise pelo nome, endereço ou tipo de recebimento.</p></div>
+      <a class="btn btn-outline" href="https://www.google.com/maps" target="_blank" rel="noopener">Abrir Google Maps ↗</a>
+    </div>
+    <div class="map-layout">
+      <aside class="panel point-list-panel">
+        <div class="panel-pad">
+          <input id="search" class="search" type="search" placeholder="⌕ Buscar ecoponto..." aria-label="Buscar ecoponto">
+          <div class="filters" id="filters">
+            <button class="filter active" data-filter="Todos">Todos</button>
+            <button class="filter" data-filter="Eletrônicos">Eletrônicos</button>
+            <button class="filter" data-filter="Pilhas e baterias">Pilhas e baterias</button>
+          </div>
+        </div>
+        <div id="point-list" aria-live="polite"></div>
+      </aside>
+      <div class="panel map-panel">
+        <div id="map" aria-label="Mapa interativo com pontos de coleta"></div>
+        <div class="map-note">Mapa base © OpenStreetMap contributors. Os marcadores iniciais são demonstrativos e devem ser substituídos por locais verificados antes da divulgação.</div>
+      </div>
+      <aside class="panel detail-panel" id="detail-panel">
+        <img id="detail-image" class="detail-image" src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=900&q=80" alt="Imagem ilustrativa de reciclagem">
+        <div class="detail-body">
+          <div class="eyebrow">Detalhes do local</div>
+          <h3 class="detail-title" id="detail-name">Selecione um marcador</h3>
+          <p class="detail-address" id="detail-address">As informações do ponto escolhido aparecerão aqui.</p>
+          <div class="detail-row"><span>♻</span><div><b>Materiais aceitos</b><span id="detail-materials">Consulte o responsável pelo local.</span></div></div>
+          <div class="detail-row"><span>◷</span><div><b>Horário</b><span id="detail-hours">Confirme antes de se deslocar.</span></div></div>
+          <div class="detail-row"><span>☎</span><div><b>Contato / observações</b><span id="detail-contact">Informação a confirmar.</span></div></div>
+          <a class="btn" id="directions" href="https://www.google.com/maps" target="_blank" rel="noopener">↗ Ver rota</a>
+        </div>
+      </aside>
+    </div>
+    <p class="small-note">Importante: tipos de resíduos aceitos, horários e contatos variam por unidade. Confirme as informações com o operador antes de levar materiais.</p>
+  </section>
+
+  <section class="section container" id="sobre">
+    <div class="about">
+      <div><div class="eyebrow">Sobre o projeto</div><h2>Informação que ajuda a mudar hábitos.</h2><p>O PCLE é uma proposta de atividade de extensão integrada que utiliza recursos digitais para facilitar a localização de pontos de recebimento de resíduos eletrônicos e apoiar o descarte responsável.</p></div>
+      <div><h3>Por que descartar corretamente?</h3><ul><li>Ajuda a reduzir o descarte inadequado no lixo comum.</li><li>Favorece a recuperação e a reciclagem de materiais.</li><li>Incentiva a responsabilidade ambiental e o consumo consciente.</li></ul><p class="small-note">Projeto acadêmico — personalize este texto com seu curso, instituição, autoria e objetivos definidos no relatório de extensão.</p></div>
+    </div>
+  </section>
+
+  <section class="section container" id="galeria">
+    <div class="section-head"><div><div class="eyebrow">Conscientização</div><h2>Pequenas atitudes, impacto coletivo</h2><p>Imagens ilustrativas para apoiar a comunicação ambiental.</p></div></div>
+    <div class="gallery">
+      <article class="gallery-card"><img src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=900&q=80" alt="Materiais separados para reciclagem" loading="lazy"><div><h3>Separe os resíduos</h3><p>Não descarte equipamentos eletrônicos junto ao lixo doméstico sem verificar a orientação local.</p></div></article>
+      <article class="gallery-card"><img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80" alt="Placa de circuito eletrônico" loading="lazy"><div><h3>Eletrônicos também são recursos</h3><p>Componentes podem conter materiais que precisam de tratamento adequado.</p></div></article>
+      <article class="gallery-card"><img src="https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&w=900&q=80" alt="Paisagem verde e natureza" loading="lazy"><div><h3>Faça escolhas conscientes</h3><p>Reutilização, manutenção e descarte correto ajudam a diminuir impactos ambientais.</p></div></article>
+    </div>
+  </section>
+</main>
+<footer>
+  <div class="container footer-inner">
+    <div class="brand" style="color:white"><span class="brand-mark" style="background:#fff;color:#145b49">♻</span><span>PCLE<small style="color:#d5e5dd">Atividade de extensão integrada</small></span></div>
+    <p>Juntos por um futuro mais sustentável.<br><span class="small-note" style="color:#d5e5dd">Projeto acadêmico — complete com seus créditos.</span></p>
+    <div class="socials" aria-label="Links sociais"><a href="#" aria-label="Instagram" title="Configure seu Instagram">IG</a><a href="#" aria-label="LinkedIn" title="Configure seu LinkedIn">in</a><a href="#" aria-label="WhatsApp" title="Configure seu WhatsApp">WA</a></div>
+  </div>
+</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // DADOS DE DEMONSTRAÇÃO: substitua por ecopontos reais verificados antes de publicar.
+  // Coordenadas são apenas marcadores de exemplo na região de Osasco/SP, não endereços de coleta confirmados.
+  const points = [
+    {id:1,name:"Ponto demonstrativo — Centro",address:"Região central de Osasco/SP (endereço a confirmar)",lat:-23.5328,lng:-46.7917,category:"Eletrônicos",materials:"A confirmar com o responsável pelo local.",hours:"A confirmar",contact:"Registro ilustrativo para desenvolvimento; não é um ponto confirmado."},
+    {id:2,name:"Ponto demonstrativo — Zona Norte",address:"Região norte de Osasco/SP (endereço a confirmar)",lat:-23.5108,lng:-46.7805,category:"Pilhas e baterias",materials:"A confirmar com o responsável pelo local.",hours:"A confirmar",contact:"Registro ilustrativo para desenvolvimento; não é um ponto confirmado."},
+    {id:3,name:"Ponto demonstrativo — Zona Sul",address:"Região sul de Osasco/SP (endereço a confirmar)",lat:-23.5510,lng:-46.7890,category:"Eletrônicos",materials:"A confirmar com o responsável pelo local.",hours:"A confirmar",contact:"Registro ilustrativo para desenvolvimento; não é um ponto confirmado."},
+    {id:4,name:"Ponto demonstrativo — Zona Oeste",address:"Região oeste de Osasco/SP (endereço a confirmar)",lat:-23.5355,lng:-46.8190,category:"Eletrônicos",materials:"A confirmar com o responsável pelo local.",hours:"A confirmar",contact:"Registro ilustrativo para desenvolvimento; não é um ponto confirmado."}
+  ];
+  const map = L.map('map').setView([-23.5328,-46.7917],12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}).addTo(map);
+  const markers = new Map();
+  let selectedId = null, currentFilter = "Todos";
+  const list = document.getElementById('point-list');
+  const search = document.getElementById('search');
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function selectPoint(p){
+    selectedId=p.id;
+    document.getElementById('detail-name').textContent=p.name;
+    document.getElementById('detail-address').textContent=p.address;
+    document.getElementById('detail-materials').textContent=p.materials;
+    document.getElementById('detail-hours').textContent=p.hours;
+    document.getElementById('detail-contact').textContent=p.contact;
+    document.getElementById('directions').href=`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`;
+    renderList();
+    map.flyTo([p.lat,p.lng],14,{duration:.5});
+    markers.get(p.id)?.openPopup();
+  }
+  points.forEach(p=>{
+    const marker=L.marker([p.lat,p.lng]).addTo(map).bindPopup(`<strong>${esc(p.name)}</strong><br>${esc(p.category)}<br><small>Local demonstrativo — confirmar endereço</small>`);
+    marker.on('click',()=>selectPoint(p)); markers.set(p.id,marker);
+  });
+  function renderList(){
+    const term=search.value.trim().toLocaleLowerCase('pt-BR');
+    const filtered=points.filter(p=>(currentFilter==="Todos"||p.category===currentFilter)&&`${p.name} ${p.address} ${p.category}`.toLocaleLowerCase('pt-BR').includes(term));
+    list.innerHTML=filtered.length?filtered.map(p=>`<button class="point-item ${p.id===selectedId?'selected':''}" data-id="${p.id}"><strong>⌖ ${esc(p.name)}</strong><span>${esc(p.address)}</span><span class="tag">${esc(p.category)} · demonstrativo</span></button>`).join(''):'<div class="empty">Nenhum ponto encontrado. Tente outro termo ou filtro.</div>';
+    list.querySelectorAll('[data-id]').forEach(el=>el.addEventListener('click',()=>selectPoint(points.find(p=>p.id===Number(el.dataset.id)))));
+    points.forEach(p=>{const marker=markers.get(p.id);const visible=filtered.some(x=>x.id===p.id);if(visible&&!map.hasLayer(marker))marker.addTo(map);if(!visible&&map.hasLayer(marker))map.removeLayer(marker);});
+  }
+  search.addEventListener('input',renderList);
+  document.querySelectorAll('.filter').forEach(btn=>btn.addEventListener('click',()=>{
+    currentFilter=btn.dataset.filter;
+    document.querySelectorAll('.filter').forEach(b=>b.classList.toggle('active',b===btn));
+    renderList();
+  }));
+  renderList();
+  selectPoint(points[0]);
+</script>
+</body>
+</html>
